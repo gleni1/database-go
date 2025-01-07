@@ -211,3 +211,36 @@ func nodeInsert(tree *BTree, new BNode, node BNode, idx uint16, key []byte, val 
 	// update the kid links
 	nodeReplaceKidN(tree, new, node, idx, split[:nsplit]...)
 }
+
+
+//insert a new key or update an existing key 
+func (tree *BTree) Insert(key []byte, val []byte) error 
+
+//delete a key and returns whether the key was there 
+func (tree *BTree) Delete(key []byte) (bool, error)
+
+func (tree *BTree) Insert(key []byte, val []byte) error {
+  // 1. check the length limit imposed by the node format
+  if err := checkLimit(key, val); err != nil {
+    retun err 
+  }
+  // 2. create the first node 
+  if tree.root == 0 {
+    root := BNode(make([]byte, BTREE_PAGE_SIZE))
+    
+    tree.root = tree.new(root)
+    return nil 
+  }
+  // 3. inset the key 
+  node := treeInsert(tree, tree.get(tree.root), key, val)
+  // 4. grow the tree if the root is split 
+  nsplit, split := nodeSplit3(node)
+  tree.del(tree.root)
+  if nsplit > 1 {
+    root := BNode(make([]byte, BTREE_PAGE_SIZE))
+    tree.root = tree.new(root)
+  } else {
+    tree.root = tree.new(split[0])
+  }
+  return nil 
+}
